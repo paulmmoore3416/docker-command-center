@@ -1,0 +1,61 @@
+# ============================================================
+# Docker Command Center — .gitignore
+# ============================================================
+
+# ------ Compiled Binaries ------
+dcc
+bin/
+dist/
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+# ------ Frontend Build Output ------
+frontend/dist/
+frontend/node_modules/
+
+# ------ Go Build Artifacts ------
+*.exe
+*.test
+*.out
+vendor/
+
+# ------ Environment & Secrets ------
+.env
+.env.*
+*.key
+*.pem
+*.cert
+*.crt
+*.p12
+secrets/
+credentials/
+
+# ------ Runtime / Logs ------
+*.log
+dcc-audit.log
+/tmp/
+
+# ------ IDE & Editor ------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ------ Claude Code Local Config ------
+.claude/settings.local.json
+
+# ------ OS Artifacts ------
+.DS_Store
+.AppleDouble
+.LSOverride
+Desktop.ini
+$RECYCLE.BIN/
+
+# ------ Test Coverage ------
+coverage.out
+coverage.html
