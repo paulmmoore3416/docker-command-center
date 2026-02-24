@@ -18,7 +18,9 @@
 </p>
 
 <p align="center">
-  <img src="assets/product-showcase.png" alt="Docker Command Center Dashboard" width="800"/>
+  <video src="assets/showcase-demo.mp4" width="800" controls>
+    Your browser does not support the video tag.
+  </video>
 </p>
 
 ---
