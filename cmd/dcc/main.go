@@ -103,6 +103,11 @@ func main() {
 	// API routes
 	api := r.PathPrefix("/api").Subrouter()
 
+	// Auth endpoints — no session required
+	api.HandleFunc("/auth/login", auth.LoginHandler).Methods("POST")
+	api.HandleFunc("/auth/logout", auth.LogoutHandler).Methods("POST")
+	api.HandleFunc("/auth/me", auth.MeHandler).Methods("GET")
+
 	secured := func(permission auth.Permission, action string, handler http.HandlerFunc) http.HandlerFunc {
 		wrapped := auth.Middleware(authCfg, permission, http.HandlerFunc(handler))
 		return func(w http.ResponseWriter, r *http.Request) {

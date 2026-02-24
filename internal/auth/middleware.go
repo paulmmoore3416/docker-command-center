@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"net/http"
+	"strings"
 )
 
 type contextKey string
@@ -30,19 +31,39 @@ var rolePermissions = map[string]map[Permission]bool{
 	"admin":    {PermRead: true, PermWrite: true, PermAdmin: true},
 }
 
+// Middleware validates the session token (or falls back to legacy API key +
+// X-Role header) and enforces the required permission.
 func Middleware(cfg Config, permission Permission, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		role := r.Header.Get("X-Role")
-		if role == "" {
-			role = "admin"
-		}
+		username := ""
+		role := ""
 
-		if cfg.APIKey != "" {
-			apiKey := r.Header.Get("X-API-Key")
-			if apiKey == "" || apiKey != cfg.APIKey {
+		// Prefer session-token auth.
+		authHeader := r.Header.Get("Authorization")
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			token := strings.TrimPrefix(authHeader, "Bearer ")
+			session, ok := LookupSession(token)
+			if !ok {
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte("missing or invalid API key"))
+				w.Write([]byte("session expired or invalid — please log in again"))
 				return
+			}
+			username = session.Username
+			role = session.Role
+		} else {
+			// Legacy: allow API-key + X-Role header path (dev/testing).
+			if cfg.APIKey != "" {
+				apiKey := r.Header.Get("X-API-Key")
+				if apiKey == "" || apiKey != cfg.APIKey {
+					w.WriteHeader(http.StatusUnauthorized)
+					w.Write([]byte("missing or invalid API key"))
+					return
+				}
+			}
+			role = r.Header.Get("X-Role")
+			username = r.Header.Get("X-User")
+			if role == "" {
+				role = "admin"
 			}
 		}
 
@@ -53,7 +74,7 @@ func Middleware(cfg Config, permission Permission, next http.Handler) http.Handl
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), ContextUser, r.Header.Get("X-User"))
+		ctx := context.WithValue(r.Context(), ContextUser, username)
 		ctx = context.WithValue(ctx, ContextRole, role)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
