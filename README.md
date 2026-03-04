@@ -25,6 +25,64 @@
 
 ---
 
+## Screenshots
+
+### Dashboard & Real-time Metrics
+
+<p align="center">
+  <img src="assets/screenshots/dashboard.png" alt="Dashboard" width="100%"/>
+</p>
+
+### Container Topology Map
+
+<p align="center">
+  <img src="assets/screenshots/topology-all-projects.png" alt="Container Topology — All Projects" width="100%"/>
+</p>
+
+<table>
+  <tr>
+    <td><img src="assets/screenshots/topology-force-layout.png" alt="Force Layout Grid" width="100%"/></td>
+    <td><img src="assets/screenshots/topology-cluster-layout.png" alt="Cluster Layout" width="100%"/></td>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshots/topology-cluster-expanded.png" alt="Cluster — Node Expanded" width="100%"/></td>
+    <td><img src="assets/screenshots/topology-node-detail.png" alt="Node Detail View" width="100%"/></td>
+  </tr>
+</table>
+
+### Compose Files Editor
+
+<p align="center">
+  <img src="assets/screenshots/compose-files.png" alt="Compose Files — bidirectional sync editor" width="100%"/>
+</p>
+
+### Admin Panel
+
+<table>
+  <tr>
+    <td><img src="assets/screenshots/admin-overview.png" alt="Admin Overview" width="100%"/></td>
+    <td><img src="assets/screenshots/admin-containers.png" alt="Admin Containers" width="100%"/></td>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshots/admin-users.png" alt="Admin Users & Sessions" width="100%"/></td>
+    <td><img src="assets/screenshots/admin-system.png" alt="Admin System & Prune Tools" width="100%"/></td>
+  </tr>
+</table>
+
+### Developer Options (Admin Only)
+
+<table>
+  <tr>
+    <td><img src="assets/screenshots/devtools-feature-flags.png" alt="Feature Flags" width="100%"/></td>
+    <td><img src="assets/screenshots/devtools-api-explorer.png" alt="API Explorer" width="100%"/></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="assets/screenshots/devtools-debug-console.png" alt="Debug Console" width="50%"/></td>
+  </tr>
+</table>
+
+---
+
 ## Overview
 
 Docker Command Center (DCC) solves the friction points of traditional tools like Portainer and Docker Desktop with a **single binary** that embeds the full React frontend. No Docker container required to run the manager itself — just build and go.
