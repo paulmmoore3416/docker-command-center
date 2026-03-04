@@ -165,7 +165,9 @@ func main() {
 	// Ephemeral environments
 	api.HandleFunc("/environments", secured(auth.PermRead, "env.list", dockerClient.ListEnvironments)).Methods("GET")
 	api.HandleFunc("/environments", secured(auth.PermWrite, "env.create", dockerClient.CreateEnvironment)).Methods("POST")
+	api.HandleFunc("/environments/{id}", secured(auth.PermWrite, "env.update", dockerClient.UpdateEnvironment)).Methods("PATCH")
 	api.HandleFunc("/environments/{id}", secured(auth.PermWrite, "env.delete", dockerClient.DeleteEnvironment)).Methods("DELETE")
+	api.HandleFunc("/environments/{id}/duplicate", secured(auth.PermAdmin, "env.duplicate", dockerClient.DuplicateEnvironment)).Methods("POST")
 	
 	// Health & dependencies
 	api.HandleFunc("/health/graph", secured(auth.PermRead, "health.graph", dockerClient.GetDependencyGraph)).Methods("GET")

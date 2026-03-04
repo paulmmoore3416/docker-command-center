@@ -1,8 +1,8 @@
 # Docker Command Center (DCC)
 ## User Guide & How-To Documentation
 
-**Version:** 2.0.0  
-**Document Date:** February 22, 2026  
+**Version:** 2.3.0
+**Document Date:** March 4, 2026
 **Audience:** End Users, DevOps Engineers, System Administrators
 
 ---

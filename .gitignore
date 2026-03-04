@@ -66,3 +66,12 @@ minikube-*
 
 # ------ Internal AI Reference Files ------
 aisharedreference.md
+
+# ------ Internal Planning & Session Documents ------
+OPTIMIZATION_*.md
+PERFORMANCE_COMPARISON.md
+SYSTEM_STATUS_*.md
+UPDATE_SUMMARY_*.md
+DEPLOYMENT_REPORT.md
+BUILD_DEPLOYMENT_SUMMARY.txt
+START_HERE.md

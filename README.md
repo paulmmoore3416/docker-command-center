@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.2.0-blue?style=flat-square" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-2.3.0-blue?style=flat-square" alt="Version"/>
   <img src="https://img.shields.io/badge/Go-1.24.0-00ADD8?style=flat-square&logo=go" alt="Go"/>
   <img src="https://img.shields.io/badge/React-18.2.0-61DAFB?style=flat-square&logo=react" alt="React"/>
   <img src="https://img.shields.io/badge/TypeScript-5.3.3-3178C6?style=flat-square&logo=typescript" alt="TypeScript"/>
@@ -85,15 +85,16 @@
 
 ## Overview
 
-Docker Command Center (DCC) solves the friction points of traditional tools like Portainer and Docker Desktop with a **single binary** that embeds the full React frontend. No Docker container required to run the manager itself — just build and go.
+Docker Command Center (DCC) solves the friction of tools like Portainer and Docker Desktop with a **single self-contained binary** that embeds the full React frontend. No Docker container required to run the manager itself — clone, build, and go.
 
 **Key differentiators:**
-- Single self-contained binary (~14 MB)
-- Zero proprietary database — everything syncs with your `docker-compose.yml` files
+- Single binary (~14 MB) — zero external runtime dependencies
+- Zero proprietary database — bidirectional sync with your `docker-compose.yml` files
 - Real-time WebSocket updates across all 21 UI pages
+- Built-in session-based authentication with role-based access control
 - AI-ready via Model Context Protocol (MCP) Gateway
 - CVE security scanning via Trivy integration
-- Built-in RBAC + audit logging
+- Full audit trail with per-user action logging
 
 ---
 
@@ -114,7 +115,7 @@ Docker Command Center (DCC) solves the friction points of traditional tools like
 git clone https://github.com/paulmmoore3416/docker-command-center.git
 cd docker-command-center
 
-# Build (frontend + backend → single binary)
+# Build frontend + embed into single binary
 make build
 
 # Run
@@ -123,98 +124,21 @@ make build
 
 Open **http://localhost:9876** in your browser.
 
-### One-liner install (after cloning)
+**Default credentials:**
+
+| Username | Password | Role |
+|----------|----------|------|
+| `demo` | `demo123` | operator |
+| `admin` | *(set via env)* | admin |
+
+### Install system-wide
 
 ```bash
-make install   # builds and installs to /usr/local/bin/dcc
+make install   # builds and copies to /usr/local/bin/dcc
 dcc            # run from anywhere
 ```
 
----
-
-## GCP Deployment (Recommended)
-
-> One-time setup, then `git pull && make install` for every update.
-
-### 1. Provision a GCP VM
-
-```bash
-gcloud compute instances create dcc-server \
-  --machine-type=e2-medium \
-  --image-family=debian-12 \
-  --image-project=debian-cloud \
-  --boot-disk-size=20GB \
-  --tags=http-server,https-server
-```
-
-### 2. Open port 9876
-
-```bash
-gcloud compute firewall-rules create allow-dcc \
-  --allow tcp:9876 \
-  --target-tags=http-server \
-  --description="Docker Command Center UI"
-```
-
-### 3. SSH into VM and install dependencies
-
-```bash
-gcloud compute ssh dcc-server
-
-# Install Docker
-curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker $USER
-
-# Install Go 1.24
-wget https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
-sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
-echo 'export PATH=$PATH:/usr/local/bin' >> ~/.bashrc && source ~/.bashrc
-
-# Install Node.js 20
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-```
-
-### 4. Clone and deploy
-
-```bash
-git clone https://github.com/paulmmoore3416/docker-command-center.git
-cd docker-command-center
-make install
-dcc
-```
-
-### 5. Subsequent updates
-
-```bash
-cd docker-command-center
-git pull
-make install
-# Restart dcc (kill old process, start new one)
-```
-
-### Optional: Run as a systemd service
-
-```bash
-sudo tee /etc/systemd/system/dcc.service > /dev/null <<EOF
-[Unit]
-Description=Docker Command Center
-After=docker.service
-Requires=docker.service
-
-[Service]
-ExecStart=/usr/local/bin/dcc
-Restart=always
-User=$USER
-Environment=DCC_API_KEY=your-secret-key-here
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl enable --now dcc
-```
+See [GCP_DEPLOY.md](GCP_DEPLOY.md) for cloud deployment instructions.
 
 ---
 
@@ -235,20 +159,21 @@ sudo systemctl enable --now dcc
 
 | # | Feature | Description |
 |---|---------|-------------|
-| 7 | **Drift Detection** | Real-time config vs. running comparison (30s intervals), root/capability alerts |
-| 8 | **CVE Security Auditing** | Trivy integration — scan all containers, hardening recommendations, export reports |
+| 7 | **Drift Detection** | Real-time config vs. running state comparison (30s intervals) with root/capability alerts |
+| 8 | **CVE Security Auditing** | Trivy integration — scan all containers, hardening recommendations, JSON/CSV export |
 | 9 | **Sandboxed Execution** | Seccomp profiles (strict/moderate/permissive), AppArmor-ready, resource limits |
 | 10 | **MCP Gateway** | AI-friendly JSON-RPC with 12 Docker operations — Claude/GPT integration ready |
 | 11 | **Log Aggregation** | Unified log stream, real-time grep, watchword alerts, level-based filtering |
-| 12 | **Dependency Topology** | Nodes-and-lines graph with health-aware colors and real-time updates |
+| 12 | **Dependency Topology** | Interactive graph with health-aware colors, Force and Cluster layout modes |
 
-### v2.2.0 Enhancements
+### v2.3.0 — What's New
 
-- **Security Page**: JSON/CSV/Print export of CVE scan results
-- **Logs Page**: Copy-to-clipboard, TXT/JSON export, color-coded severity badges, virtualized rendering
-- **Dashboard**: Real-time CPU/Memory/Network metrics cards + area chart (5s refresh)
-- **Networks Page**: Network stats (total/bridge/overlay/connected), container network table
-- **Backend**: Syntax fixes in Docker client, topology graph metrics optimization
+- **Authentication System**: Session-based login with secure Bearer token storage
+- **Role-Based Access Control**: `operator` and `admin` roles with per-route enforcement
+- **Admin Panel**: Live user management, container bulk operations, system prune tools, alert thresholds
+- **Developer Options**: Feature flags, live API explorer, real-time debug console, profiler — admin only
+- **Boot Experience**: Cinematic boot screen with animated video on first launch
+- **Admin Docker Tools**: Bulk container management and system-level Docker operations via admin API
 
 ---
 
@@ -264,10 +189,10 @@ sudo systemctl enable --now dcc
 │  └──────┬──────┘    └─────────────────────┘ │
 │         │                                    │
 │  ┌──────▼──────────────────────────────────┐│
-│  │         Internal Modules                ││
-│  │  docker/  drift/  security/  logs/      ││
-│  │  sandbox/ mcp/    proxy/     audit/     ││
-│  │  auth/    filewatch/ websockets/        ││
+│  │              Internal Modules           ││
+│  │  docker/   drift/    security/  logs/   ││
+│  │  sandbox/  mcp/      proxy/     audit/  ││
+│  │  auth/     devtools/ filewatch/ ws/     ││
 │  └─────────────────────────────────────────┘│
 └─────────────────────────────────────────────┘
          │
@@ -292,45 +217,61 @@ sudo systemctl enable --now dcc
 
 ---
 
-## API Reference
-
-All endpoints are under `/api` and support optional RBAC via `X-API-Key`, `X-Role`, and `X-User` headers.
-
-| Endpoint | Method | Permission | Description |
-|----------|--------|-----------|-------------|
-| `/api/containers` | GET | read | List all containers |
-| `/api/containers/{id}/start` | POST | write | Start container |
-| `/api/containers/{id}/logs` | GET | read | Stream container logs |
-| `/api/compose/deploy` | POST | write | Deploy compose stack |
-| `/api/drift` | GET | read | Get drift report |
-| `/api/security/scan/all` | POST | write | Scan all images for CVEs |
-| `/api/mcp/execute` | POST | write | Execute MCP tool |
-| `/api/logs/aggregated` | GET | read | Get aggregated logs |
-| `/api/audit` | GET | admin | Read audit trail |
-| `/api/ws` | WS | — | Real-time WebSocket stream |
-
-Full API: 50+ endpoints covering containers, compose, networks, volumes, environments, proxies, stacks, templates, updates, security, sandbox, MCP, logs, and audit.
-
----
-
 ## Authentication & Security
 
-Set `DCC_API_KEY` environment variable to enable API key enforcement:
+DCC uses session-based authentication. On login, a secure 24-byte token is issued and stored client-side. All API requests carry the token as a Bearer header.
+
+```bash
+# Login
+POST /api/auth/login   {"username": "...", "password": "..."}
+
+# Check session
+GET  /api/auth/me
+
+# Logout
+POST /api/auth/logout
+```
+
+**RBAC Roles:**
+
+| Role | Access |
+|------|--------|
+| `operator` | Full read + write access to containers, compose, logs, networks, volumes |
+| `admin` | All operator permissions + Admin Panel, Developer Options, audit log, user management |
+
+Sessions expire after 24 hours. The audit trail is written in real time and accessible at `/api/audit` (admin only).
+
+To enforce an additional static API key at the server level:
 
 ```bash
 export DCC_API_KEY=your-secure-key
 dcc
 ```
 
-**RBAC Roles:**
+---
 
-| Role | Permissions |
-|------|-------------|
-| `viewer` | GET endpoints only |
-| `operator` | GET + POST/PUT/DELETE |
-| `admin` | All operations + audit log |
+## API Reference
 
-Pass role via `X-Role` header. Audit trail written to `/tmp/dcc-audit.log` and accessible at `/api/audit` (admin only).
+All endpoints live under `/api`. Authentication uses `Authorization: Bearer <token>`.
+
+| Endpoint | Method | Permission | Description |
+|----------|--------|-----------|-------------|
+| `/api/auth/login` | POST | — | Authenticate and receive token |
+| `/api/auth/me` | GET | — | Get current session info |
+| `/api/containers` | GET | operator | List all containers |
+| `/api/containers/{id}/start` | POST | operator | Start container |
+| `/api/containers/{id}/logs` | GET | operator | Stream container logs |
+| `/api/compose/deploy` | POST | operator | Deploy compose stack |
+| `/api/drift` | GET | operator | Get drift report |
+| `/api/security/scan/all` | POST | operator | Scan all images for CVEs |
+| `/api/mcp/execute` | POST | operator | Execute MCP tool |
+| `/api/logs/aggregated` | GET | operator | Get aggregated logs |
+| `/api/admin/users` | GET | admin | List users and sessions |
+| `/api/admin/system` | GET | admin | Docker daemon info |
+| `/api/audit` | GET | admin | Read audit trail |
+| `/api/ws` | WS | — | Real-time WebSocket stream |
+
+Full API: 50+ endpoints covering containers, compose, networks, volumes, environments, proxies, stacks, templates, updates, security, sandbox, MCP, logs, and audit.
 
 ---
 
@@ -340,10 +281,10 @@ Pass role via `X-Role` header. Audit trail written to `/tmp/dcc-audit.log` and a
 # Frontend hot-reload dev server (port 5173)
 make dev-frontend
 
-# Backend with live reload
+# Backend only
 make dev-backend
 
-# Full production build
+# Full production build (frontend embedded in binary)
 make build
 
 # Clean all artifacts
@@ -356,29 +297,44 @@ make clean
 
 ```
 docker-command-center/
-├── assets/                  # Branding images
-├── cmd/dcc/main.go          # Entry point + all API routes (300 lines)
+├── assets/                  # Branding, screenshots, demo video
+├── cmd/dcc/main.go          # Server entrypoint + all HTTP route registration
 ├── internal/
-│   ├── audit/               # Audit trail logging
-│   ├── auth/                # API key + RBAC middleware
-│   ├── docker/              # Docker SDK wrapper (1,377 lines)
-│   ├── drift/               # Config drift detection
-│   ├── filewatch/           # Bidirectional file sync
-│   ├── logs/                # Log aggregation & streaming
-│   ├── mcp/                 # Model Context Protocol gateway
+│   ├── auth/                # Session auth, RBAC middleware, admin user management
+│   ├── audit/               # Per-user action audit trail
+│   ├── devtools/            # Feature flags, debug console, profiler (admin only)
+│   ├── docker/              # Docker SDK wrapper + admin bulk operations
+│   ├── drift/               # Config drift detection (30s intervals)
+│   ├── filewatch/           # Bidirectional docker-compose.yml file sync
+│   ├── logs/                # Log aggregation, streaming, grep
+│   ├── mcp/                 # Model Context Protocol gateway (12 operations)
 │   ├── proxy/               # Reverse proxy manager
 │   ├── sandbox/             # Seccomp sandboxed execution
-│   ├── security/            # Trivy CVE scanner
+│   ├── security/            # Trivy CVE scanner integration
 │   └── websockets/          # Real-time WebSocket hub
 ├── frontend/
 │   └── src/
 │       ├── pages/           # 21 UI pages
 │       ├── components/      # Shared components
+│       ├── context/         # Auth context and session state
 │       └── hooks/           # Custom React hooks
-├── compose/                 # Example docker-compose templates
+├── compose/                 # Example docker-compose stack templates
+├── projectbusiness/         # Business documentation and SOPs
 ├── Makefile                 # Build automation
-└── go.mod                   # Go dependencies
+├── GCP_DEPLOY.md            # Google Cloud Platform deployment guide
+├── CHANGELOG.md             # Version history
+└── go.mod                   # Go module dependencies
 ```
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [GCP_DEPLOY.md](GCP_DEPLOY.md) | Step-by-step Google Cloud deployment guide |
+| [CHANGELOG.md](CHANGELOG.md) | Full version history |
+| [projectbusiness/](projectbusiness/) | Product overview, architecture, user guide, SOPs |
 
 ---
 
@@ -389,5 +345,5 @@ MIT — see [LICENSE](LICENSE)
 ---
 
 <p align="center">
-  Built with Go + React &nbsp;|&nbsp; Port 9876 &nbsp;|&nbsp; Version 2.2.0
+  Built with Go + React &nbsp;|&nbsp; Port 9876 &nbsp;|&nbsp; Version 2.3.0
 </p>

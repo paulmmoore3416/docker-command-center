@@ -42,13 +42,14 @@ type HistoryEntry struct {
 }
 
 type Environment struct {
-	ID         string    `json:"id"`
-	Name       string    `json:"name"`
-	Branch     string    `json:"branch"`
-	CreatedAt  time.Time `json:"created_at"`
-	ExpiresAt  time.Time `json:"expires_at"`
-	PortOffset int       `json:"port_offset"`
-	Containers []string  `json:"containers"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Branch      string    `json:"branch"`
+	ComposePath string    `json:"compose_path"`
+	CreatedAt   time.Time `json:"created_at"`
+	ExpiresAt   time.Time `json:"expires_at"`
+	PortOffset  int       `json:"port_offset"`
+	Containers  []string  `json:"containers"`
 }
 
 type ResourceThresholds struct {
@@ -593,6 +594,12 @@ func (c *Client) ListTemplates(w http.ResponseWriter, r *http.Request) {
 		{"name": "nextcloud", "description": "Nextcloud + Postgres", "category": "storage"},
 		{"name": "traefik", "description": "Traefik reverse proxy", "category": "network"},
 		{"name": "prometheus", "description": "Prometheus + Grafana", "category": "monitoring"},
+		{"name": "wordpress", "description": "WordPress + MySQL", "category": "cms"},
+		{"name": "postgresql", "description": "Standalone PostgreSQL", "category": "database"},
+		{"name": "redis", "description": "Redis in-memory store", "category": "database"},
+		{"name": "mongodb", "description": "MongoDB document database", "category": "database"},
+		{"name": "nginx-proxy-manager", "description": "Nginx Proxy Manager", "category": "network"},
+		{"name": "portainer", "description": "Portainer Docker UI", "category": "management"},
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -610,12 +617,26 @@ func (c *Client) CreateTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	content := "version: '3'\nservices:\n  app:\n    image: nginx:alpine\n    ports:\n      - '8080:80'\n"
-	if req.Name == "nextcloud" {
-		content = "version: '3'\nservices:\n  db:\n    image: postgres:16\n    environment:\n      POSTGRES_PASSWORD: example\n  app:\n    image: nextcloud:stable\n    ports:\n      - '8080:80'\n    depends_on:\n      - db\n"
-	}
 
-	if req.Name == "traefik" {
+	switch req.Name {
+	case "nextcloud":
+		content = "version: '3'\nservices:\n  db:\n    image: postgres:16\n    environment:\n      POSTGRES_PASSWORD: example\n  app:\n    image: nextcloud:stable\n    ports:\n      - '8080:80'\n    depends_on:\n      - db\n"
+	case "traefik":
 		content = "version: '3'\nservices:\n  traefik:\n    image: traefik:v3.0\n    ports:\n      - '80:80'\n      - '8080:8080'\n"
+	case "prometheus":
+		content = "version: '3'\nservices:\n  prometheus:\n    image: prom/prometheus:latest\n    ports:\n      - '9090:9090'\n  grafana:\n    image: grafana/grafana:latest\n    ports:\n      - '3000:3000'\n    depends_on:\n      - prometheus\n"
+	case "wordpress":
+		content = "version: '3'\nservices:\n  db:\n    image: mysql:8\n    environment:\n      MYSQL_ROOT_PASSWORD: example\n      MYSQL_DATABASE: wordpress\n      MYSQL_USER: wordpress\n      MYSQL_PASSWORD: wordpress\n  wordpress:\n    image: wordpress:latest\n    ports:\n      - '8080:80'\n    environment:\n      WORDPRESS_DB_HOST: db:3306\n      WORDPRESS_DB_USER: wordpress\n      WORDPRESS_DB_PASSWORD: wordpress\n      WORDPRESS_DB_NAME: wordpress\n    depends_on:\n      - db\n"
+	case "postgresql":
+		content = "version: '3'\nservices:\n  postgres:\n    image: postgres:16\n    ports:\n      - '5432:5432'\n    environment:\n      POSTGRES_USER: postgres\n      POSTGRES_PASSWORD: example\n      POSTGRES_DB: app\n"
+	case "redis":
+		content = "version: '3'\nservices:\n  redis:\n    image: redis:7-alpine\n    ports:\n      - '6379:6379'\n"
+	case "mongodb":
+		content = "version: '3'\nservices:\n  mongodb:\n    image: mongo:7\n    ports:\n      - '27017:27017'\n"
+	case "nginx-proxy-manager":
+		content = "version: '3'\nservices:\n  npm:\n    image: jc21/nginx-proxy-manager:latest\n    ports:\n      - '80:80'\n      - '81:81'\n      - '443:443'\n"
+	case "portainer":
+		content = "version: '3'\nservices:\n  portainer:\n    image: portainer/portainer-ce:latest\n    ports:\n      - '9000:9000'\n    volumes:\n      - /var/run/docker.sock:/var/run/docker.sock\n"
 	}
 
 	targetDir := filepath.Join(".", "compose")
@@ -937,13 +958,14 @@ func (c *Client) CreateEnvironment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	env := &Environment{
-		ID:         fmt.Sprintf("env-%d", time.Now().Unix()),
-		Name:       req.Name,
-		Branch:     req.Branch,
-		CreatedAt:  time.Now(),
-		ExpiresAt:  time.Now().Add(time.Duration(req.TTLMinutes) * time.Minute),
-		PortOffset: len(c.environments) * 100,
-		Containers: []string{},
+		ID:          fmt.Sprintf("env-%d", time.Now().Unix()),
+		Name:        req.Name,
+		Branch:      req.Branch,
+		ComposePath: req.ComposePath,
+		CreatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(time.Duration(req.TTLMinutes) * time.Minute),
+		PortOffset:  len(c.environments) * 100,
+		Containers:  []string{},
 	}
 
 	c.mu.Lock()
@@ -966,6 +988,83 @@ func (c *Client) DeleteEnvironment(w http.ResponseWriter, r *http.Request) {
 
 	c.cleanupEnvironment(id)
 	w.WriteHeader(http.StatusOK)
+}
+
+func (c *Client) UpdateEnvironment(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	var req struct {
+		Name        string `json:"name"`
+		Branch      string `json:"branch"`
+		ComposePath string `json:"compose_path"`
+		ExtendMins  int    `json:"extend_minutes"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	c.mu.Lock()
+	env, exists := c.environments[id]
+	if !exists {
+		c.mu.Unlock()
+		http.Error(w, "environment not found", http.StatusNotFound)
+		return
+	}
+	if req.Name != "" {
+		env.Name = req.Name
+	}
+	if req.Branch != "" {
+		env.Branch = req.Branch
+	}
+	if req.ComposePath != "" {
+		env.ComposePath = req.ComposePath
+	}
+	if req.ExtendMins > 0 {
+		env.ExpiresAt = env.ExpiresAt.Add(time.Duration(req.ExtendMins) * time.Minute)
+	}
+	c.mu.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(env)
+}
+
+func (c *Client) DuplicateEnvironment(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	c.mu.RLock()
+	src, exists := c.environments[id]
+	if !exists {
+		c.mu.RUnlock()
+		http.Error(w, "environment not found", http.StatusNotFound)
+		return
+	}
+	remaining := time.Until(src.ExpiresAt)
+	newEnv := &Environment{
+		ID:          fmt.Sprintf("env-%d", time.Now().UnixNano()),
+		Name:        src.Name + "-copy",
+		Branch:      src.Branch,
+		ComposePath: src.ComposePath,
+		CreatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(remaining),
+		PortOffset:  (len(c.environments) + 1) * 100,
+		Containers:  []string{},
+	}
+	c.mu.RUnlock()
+
+	c.mu.Lock()
+	c.environments[newEnv.ID] = newEnv
+	c.mu.Unlock()
+
+	go func() {
+		time.Sleep(time.Until(newEnv.ExpiresAt))
+		c.cleanupEnvironment(newEnv.ID)
+	}()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(newEnv)
 }
 
 func (c *Client) cleanupEnvironment(envID string) {

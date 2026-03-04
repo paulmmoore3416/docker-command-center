@@ -20,7 +20,7 @@ export default function Volumes() {
     try {
       const response = await fetch('/api/volumes')
       const data = await response.json()
-      setVolumes(data.Volumes || [])
+      setVolumes(Array.isArray(data) ? data : (data.Volumes || []))
     } catch (error) {
       console.error('Failed to load volumes:', error)
     }
@@ -89,7 +89,7 @@ export default function Volumes() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                 <HardDrive size={18} color="#f59e0b" />
                 <span style={{ fontWeight: '500', fontSize: '14px' }}>
-                  {volume.Name.slice(0, 30)}...
+                  {volume.Name.length > 30 ? volume.Name.slice(0, 30) + '…' : volume.Name}
                 </span>
               </div>
               <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>

@@ -1,5 +1,7 @@
 # GCP Deployment Guide — Docker Command Center
 
+> **Version:** 2.3.0 &nbsp;|&nbsp; Last updated: March 4, 2026
+
 ## One-Time VM Setup
 
 ### 1. Create the VM
@@ -85,8 +87,8 @@ Requires=docker.service
 ExecStart=/usr/local/bin/dcc
 Restart=always
 RestartSec=5
-User=paul
-WorkingDirectory=/home/paul/docker-command-center
+User=YOUR_USERNAME
+WorkingDirectory=/home/YOUR_USERNAME/docker-command-center
 Environment=DCC_API_KEY=REPLACE_WITH_YOUR_SECRET_KEY
 
 [Install]
@@ -117,7 +119,9 @@ sudo systemctl restart dcc
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DCC_API_KEY` | Enables API key authentication | disabled |
+| `DCC_API_KEY` | Optional static API key for additional server-level auth enforcement | disabled |
+
+DCC uses session-based authentication by default. Users log in via the web UI with a username and password. The `DCC_API_KEY` variable adds an extra layer of server-side enforcement if needed.
 
 Set in the systemd unit file or export before running:
 
