@@ -5,7 +5,7 @@
 <h1 align="center">Docker Command Center</h1>
 
 <p align="center">
-  <strong>A next-generation Docker management platform — CLI-first, zero lock-in, real-time control.</strong>
+  <strong>A next generation Docker management platform — CLI-first, zero lock-in, realtime control.</strong>
 </p>
 
 <p align="center">
