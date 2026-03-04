@@ -177,7 +177,8 @@ export default function TopologyMap({ fullscreen = false, height = '600px' }: To
   useEffect(() => {
     const latest = messages[messages.length - 1]
     if (latest?.type === 'topology_update') {
-      setGraph(latest.data)
+      const d = latest.data ?? {}
+      setGraph({ nodes: d.nodes ?? [], edges: d.edges ?? [] })
     }
   }, [messages])
 
@@ -224,7 +225,10 @@ export default function TopologyMap({ fullscreen = false, height = '600px' }: To
     try {
       const response = await fetch('/api/health/graph')
       const data = await response.json()
-      setGraph(data)
+      setGraph({
+        nodes: data.nodes ?? [],
+        edges: data.edges ?? []
+      })
     } catch (error) {
       console.error('Failed to load dependency graph:', error)
     }

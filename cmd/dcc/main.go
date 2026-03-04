@@ -18,6 +18,7 @@ import (
 
 	"github.com/paulmmoore3416/dcc/internal/audit"
 	"github.com/paulmmoore3416/dcc/internal/auth"
+	"github.com/paulmmoore3416/dcc/internal/devtools"
 	"github.com/paulmmoore3416/dcc/internal/docker"
 	"github.com/paulmmoore3416/dcc/internal/drift"
 	"github.com/paulmmoore3416/dcc/internal/filewatch"
@@ -48,6 +49,7 @@ func (s *statusRecorder) WriteHeader(code int) {
 }
 
 func main() {
+	log.SetOutput(devtools.NewDebugWriter(os.Stderr))
 	log.Println("🚀 Docker Command Center starting...")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -92,6 +94,9 @@ func main() {
 	// Initialize monitoring
 	go dockerClient.StartMonitoring(ctx, hub)
 	go dockerClient.StartTopologyBroadcast(ctx, hub)
+
+	// Initialize developer tooling
+	flagStore := devtools.NewFlagStore()
 
 	// Initialize audit logger and auth configuration
 	auditLogger := audit.NewLogger("/tmp/dcc-audit.log")
@@ -226,6 +231,30 @@ func main() {
 	api.HandleFunc("/updates/settings", secured(auth.PermWrite, "updates.settings.update", dockerClient.UpdateUpdateSettings)).Methods("PUT")
 	api.HandleFunc("/updates/run", secured(auth.PermWrite, "updates.run", dockerClient.RunUpdateNow)).Methods("POST")
 
+	// Admin: user & session management
+	api.HandleFunc("/admin/users", secured(auth.PermAdmin, "admin.users.list", func(w http.ResponseWriter, r *http.Request) {
+		users := auth.ListUsers()
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(users)
+	})).Methods("GET")
+	api.HandleFunc("/admin/sessions", secured(auth.PermAdmin, "admin.sessions.list", func(w http.ResponseWriter, r *http.Request) {
+		sessions := auth.ListActiveSessions()
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(sessions)
+	})).Methods("GET")
+	api.HandleFunc("/admin/sessions/{token}", secured(auth.PermAdmin, "admin.sessions.revoke", func(w http.ResponseWriter, r *http.Request) {
+		token := mux.Vars(r)["token"]
+		auth.DeleteSession(token)
+		w.WriteHeader(http.StatusNoContent)
+	})).Methods("DELETE")
+
+	// Admin: Docker system info & prune
+	api.HandleFunc("/admin/system-info", secured(auth.PermAdmin, "admin.system.info", dockerClient.GetSystemInfo)).Methods("GET")
+	api.HandleFunc("/admin/prune/containers", secured(auth.PermAdmin, "admin.prune.containers", dockerClient.PruneContainers)).Methods("POST")
+	api.HandleFunc("/admin/prune/images", secured(auth.PermAdmin, "admin.prune.images", dockerClient.PruneImages)).Methods("POST")
+	api.HandleFunc("/admin/prune/volumes", secured(auth.PermAdmin, "admin.prune.volumes", dockerClient.PruneVolumes)).Methods("POST")
+	api.HandleFunc("/admin/prune/networks", secured(auth.PermAdmin, "admin.prune.networks", dockerClient.PruneNetworks)).Methods("POST")
+
 	// Audit logs
 	api.HandleFunc("/audit", secured(auth.PermAdmin, "audit.read", func(w http.ResponseWriter, r *http.Request) {
 		limit := 200
@@ -241,6 +270,51 @@ func main() {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(events)
+	})).Methods("GET")
+	api.HandleFunc("/audit", secured(auth.PermAdmin, "audit.flush", func(w http.ResponseWriter, r *http.Request) {
+		if err := auditLogger.Flush(); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})).Methods("DELETE")
+	api.HandleFunc("/audit/stats", secured(auth.PermAdmin, "audit.stats", func(w http.ResponseWriter, r *http.Request) {
+		stats := auditLogger.Stats()
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(stats)
+	})).Methods("GET")
+
+	// Developer tools (admin-only)
+	api.HandleFunc("/dev/logs", secured(auth.PermAdmin, "dev.logs.get", devtools.GlobalDebugLogger.HandleGetLogs)).Methods("GET")
+	api.HandleFunc("/dev/logs", secured(auth.PermAdmin, "dev.logs.clear", devtools.GlobalDebugLogger.HandleClearLogs)).Methods("DELETE")
+	api.HandleFunc("/dev/metrics", secured(auth.PermAdmin, "dev.metrics", devtools.HandleMetrics)).Methods("GET")
+	api.HandleFunc("/dev/flags", secured(auth.PermAdmin, "dev.flags.list", flagStore.HandleList)).Methods("GET")
+	api.HandleFunc("/dev/flags/{name}", secured(auth.PermAdmin, "dev.flags.toggle", flagStore.HandleToggle)).Methods("PUT")
+	api.HandleFunc("/dev/routes", secured(auth.PermAdmin, "dev.routes", func(w http.ResponseWriter, req *http.Request) {
+		type routeInfo struct {
+			Methods []string `json:"methods"`
+			Path    string   `json:"path"`
+		}
+		var routes []routeInfo
+		r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+			methods, err := route.GetMethods()
+			if err != nil || len(methods) == 0 {
+				return nil
+			}
+			path := ""
+			for _, a := range ancestors {
+				if p, err := a.GetPathTemplate(); err == nil {
+					path += p
+				}
+			}
+			if p, err := route.GetPathTemplate(); err == nil {
+				path += p
+			}
+			routes = append(routes, routeInfo{Methods: methods, Path: path})
+			return nil
+		})
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(routes)
 	})).Methods("GET")
 	
 	// WebSocket

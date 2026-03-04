@@ -3,7 +3,7 @@
 # ============================================================
 
 # ------ Compiled Binaries ------
-dcc
+/dcc
 bin/
 dist/
 *.deb
@@ -59,3 +59,10 @@ $RECYCLE.BIN/
 # ------ Test Coverage ------
 coverage.out
 coverage.html
+
+# ------ Large Binaries (not for git) ------
+minikube-linux-amd64
+minikube-*
+
+# ------ Internal AI Reference Files ------
+aisharedreference.md

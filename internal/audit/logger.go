@@ -69,3 +69,42 @@ func (l *Logger) ReadLast(limit int) ([]Event, error) {
 	}
 	return events[len(events)-limit:], nil
 }
+
+// LogStats holds metadata about the audit log file.
+type LogStats struct {
+	Path      string `json:"path"`
+	SizeBytes int64  `json:"size_bytes"`
+	LineCount int    `json:"line_count"`
+}
+
+// Stats returns file size and entry count without reading event data.
+func (l *Logger) Stats() LogStats {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	stats := LogStats{Path: l.path}
+	if info, err := os.Stat(l.path); err == nil {
+		stats.SizeBytes = info.Size()
+	}
+
+	file, err := os.Open(l.path)
+	if err != nil {
+		return stats
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		if len(scanner.Bytes()) > 0 {
+			stats.LineCount++
+		}
+	}
+	return stats
+}
+
+// Flush truncates the audit log file, removing all entries.
+func (l *Logger) Flush() error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return os.WriteFile(l.path, []byte{}, 0644)
+}

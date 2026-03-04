@@ -1026,8 +1026,8 @@ func (c *Client) buildDependencyGraph(ctx context.Context) (DependencyGraph, err
 		return DependencyGraph{}, err
 	}
 
-	var nodes []GraphNode
-	var edges []GraphEdge
+	nodes := make([]GraphNode, 0, len(containers))
+	edges := make([]GraphEdge, 0)
 	serviceToID := make(map[string]string)
 	containerHealth := make(map[string]string)
 	containerProject := make(map[string]string)
@@ -1076,13 +1076,38 @@ buildNodes:
 			health = inspect.State.Health.Status
 		}
 
-		if serviceName, ok := cont.Labels["com.docker.compose.service"]; ok {
-			serviceToID[serviceName] = cont.ID[:12]
+		shortID := cont.ID[:12]
+
+		serviceName := ""
+		if sn, ok := cont.Labels["com.docker.compose.service"]; ok {
+			serviceName = sn
+			serviceToID[sn] = shortID
 		}
 
 		projectName := cont.Labels["com.docker.compose.project"]
-		containerProject[cont.ID[:12]] = projectName
-		containerHealth[cont.ID[:12]] = health
+		containerProject[shortID] = projectName
+		containerHealth[shortID] = health
+
+		// Determine display name: prefer service name, then container name
+		displayName := serviceName
+		if displayName == "" && len(cont.Names) > 0 {
+			displayName = cont.Names[0]
+		}
+		if displayName == "" {
+			displayName = shortID
+		}
+
+		nodes = append(nodes, GraphNode{
+			ID:     shortID,
+			Name:   displayName,
+			Status: cont.State,
+			Health: health,
+			Metadata: map[string]string{
+				"image":   cont.Image,
+				"project": projectName,
+			},
+			Metrics: metricsMap[shortID],
+		})
 
 		// Check for depends_on in labels
 		if deps, ok := cont.Labels["com.docker.compose.depends_on"]; ok {
