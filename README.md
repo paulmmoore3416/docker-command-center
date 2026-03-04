@@ -18,6 +18,10 @@
 </p>
 
 <p align="center">
+  <a href="https://paulmmoore3416.github.io/docker-command-center/">📄 Documentation Site</a>
+</p>
+
+<p align="center">
   <video src="assets/showcase-demo.mp4" width="800" controls>
     Your browser does not support the video tag.
   </video>
