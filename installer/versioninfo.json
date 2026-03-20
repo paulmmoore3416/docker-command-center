@@ -1,0 +1,43 @@
+{
+  "FixedFileInfo": {
+    "FileVersion": {
+      "Major": 2,
+      "Minor": 3,
+      "Patch": 0,
+      "Build": 0
+    },
+    "ProductVersion": {
+      "Major": 2,
+      "Minor": 3,
+      "Patch": 0,
+      "Build": 0
+    },
+    "FileFlagsMask": "3f",
+    "FileFlags ": "00",
+    "FileOS": "040004",
+    "FileType": "01",
+    "FileSubType": "00"
+  },
+  "StringFileInfo": {
+    "Comments": "",
+    "CompanyName": "Paul Moore",
+    "FileDescription": "Docker Command Center Installer",
+    "FileVersion": "2.3.0.0",
+    "InternalName": "DockerCommandCenter-Setup",
+    "LegalCopyright": "Copyright 2026 Paul Moore",
+    "LegalTrademarks": "",
+    "OriginalFilename": "DockerCommandCenter-Setup.exe",
+    "PrivateBuild": "",
+    "ProductName": "Docker Command Center",
+    "ProductVersion": "2.3.0.0",
+    "SpecialBuild": ""
+  },
+  "VarFileInfo": {
+    "Translation": {
+      "LangID": "0409",
+      "CharsetID": "04B0"
+    }
+  },
+  "IconPath": "dcc.ico",
+  "ManifestPath": "app.manifest"
+}

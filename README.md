@@ -15,6 +15,7 @@
   <img src="https://img.shields.io/badge/TypeScript-5.3.3-3178C6?style=flat-square&logo=typescript" alt="TypeScript"/>
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License"/>
   <img src="https://img.shields.io/badge/port-9876-orange?style=flat-square" alt="Port 9876"/>
+  <img src="https://img.shields.io/badge/Windows-Server%202025-0078D4?style=flat-square&logo=windows" alt="Windows Server 2025"/>
 </p>
 
 <p align="center">
@@ -104,6 +105,32 @@ Docker Command Center (DCC) solves the friction of tools like Portainer and Dock
 
 ## Quick Start
 
+### Windows — One-Click Installer
+
+> **Supports:** Windows 10/11, Windows Server 2016/2019/2022/2025 (x64)
+>
+> **Prerequisite:** [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) must be installed and running.
+
+1. Download **[DockerCommandCenter-Setup.exe](dist/DockerCommandCenter-Setup.exe)** from the `dist/` folder (or the [Releases](../../releases) page)
+2. Run the installer — it will prompt for administrator privileges (required to write to `Program Files`)
+3. DCC installs to `C:\Program Files\Docker Command Center\` and launches automatically
+4. Your browser opens to **[http://localhost:9876](http://localhost:9876)**
+5. Start Menu and Desktop shortcuts are created for future launches
+
+**What the installer does:**
+
+- Extracts `dcc.exe` to `C:\Program Files\Docker Command Center\`
+- Creates Start Menu shortcuts (Launch + Uninstall)
+- Creates a Desktop shortcut
+- Registers in Programs & Features for clean uninstall
+- Starts the DCC server and opens your browser automatically
+
+**To uninstall:** Control Panel → Programs → Docker Command Center → Uninstall (or use the Start Menu shortcut)
+
+---
+
+### Linux / macOS — Build from Source
+
 ### Prerequisites
 
 | Tool | Version |
@@ -135,7 +162,7 @@ Open **http://localhost:9876** in your browser.
 | `demo` | `demo123` | operator |
 | `admin` | *(set via env)* | admin |
 
-### Install system-wide
+### Install system-wide (Linux)
 
 ```bash
 make install   # builds and copies to /usr/local/bin/dcc

@@ -6,6 +6,8 @@
 /dcc
 bin/
 dist/
+# Allow Windows installer
+!dist/DockerCommandCenter-Setup.exe
 *.deb
 *.rpm
 *.tar.gz
@@ -17,6 +19,8 @@ frontend/node_modules/
 
 # ------ Go Build Artifacts ------
 *.exe
+# Allow Windows installer
+!dist/DockerCommandCenter-Setup.exe
 *.test
 *.out
 vendor/

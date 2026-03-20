@@ -4,6 +4,22 @@ All notable changes to Docker Command Center are documented here.
 
 ---
 
+## [2.3.1] — 2026-03-20
+
+### Added
+- **Windows Installer** — `DockerCommandCenter-Setup.exe` for Windows 10/11 and Windows Server 2016–2025 (x64)
+
+  - Self-contained installer with embedded `dcc.exe` (~17 MB)
+  - Installs to `C:\Program Files\Docker Command Center\`
+  - Creates Start Menu and Desktop shortcuts
+  - Registers in Programs & Features for clean uninstall
+  - Automatically launches DCC and opens browser to `http://localhost:9876`
+  - App icon embedded from project logo (`.ico` format, all sizes 16–256px)
+  - UAC elevation prompt via application manifest (`requireAdministrator`)
+  - Supports Windows Server 2025 (compatibility manifest entry)
+
+---
+
 ## [2.3.0] — 2026-03-04
 
 ### Added
