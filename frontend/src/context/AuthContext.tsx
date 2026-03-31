@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const savedToken = localStorage.getItem('dcc_token')
     if (!savedToken) return
 
-    fetch('http://localhost:9876/api/auth/me', {
+    fetch('/api/auth/me', {
       headers: { Authorization: `Bearer ${savedToken}` },
     })
       .then(r => {
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   async function login(username: string, password: string) {
-    const res = await fetch('http://localhost:9876/api/auth/login', {
+    const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function logout() {
     const savedToken = localStorage.getItem('dcc_token')
     if (savedToken) {
-      fetch('http://localhost:9876/api/auth/logout', {
+      fetch('/api/auth/logout', {
         method: 'POST',
         headers: { Authorization: `Bearer ${savedToken}` },
       }).catch(() => {})

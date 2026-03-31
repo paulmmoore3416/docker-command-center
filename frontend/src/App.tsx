@@ -92,7 +92,8 @@ function Navigation() {
     return localStorage.getItem('dcc_nav_collapsed') === 'true'
   })
 
-  const { messages } = useWebSocket('ws://localhost:9876/api/ws')
+  const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws`
+  const { messages } = useWebSocket(wsUrl)
 
   useEffect(() => {
     const alertMessages = messages.filter((m: any) => m.type === 'alert')

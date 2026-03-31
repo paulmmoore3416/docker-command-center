@@ -166,7 +166,8 @@ export default function TopologyMap({ fullscreen = false, height = '600px' }: To
   const [filterProject, setFilterProject] = useState<string>('all')
   const [filterHealth, setFilterHealth] = useState<string>('all')
   const [layoutType, setLayoutType] = useState<'cluster' | 'force' | 'hierarchical'>('cluster')
-  const { messages } = useWebSocket('ws://localhost:9876/api/ws')
+  const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws`
+  const { messages } = useWebSocket(wsUrl)
 
   useEffect(() => {
     loadGraph()

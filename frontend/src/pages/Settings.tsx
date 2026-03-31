@@ -27,7 +27,7 @@ export default function SettingsPage() {
     return saved ? JSON.parse(saved) : [{
       id: 'local',
       name: 'Local System',
-      url: 'http://localhost:9876',
+      url: window.location.origin,
       apiKey: '',
       isActive: true,
       isDefault: true,
@@ -126,7 +126,7 @@ export default function SettingsPage() {
       saveSystems(updated)
       
       // Update API base URL for all requests
-      if (system.url !== 'http://localhost:9876') {
+      if (system.url !== window.location.origin) {
         alert(`Switched to ${system.name}. Reload the page to connect to ${system.url}`)
       }
     }

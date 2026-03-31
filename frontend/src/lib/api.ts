@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:9876/api'
+const BASE = '/api'
 
 function getToken(): string | null {
   return localStorage.getItem('dcc_token')
